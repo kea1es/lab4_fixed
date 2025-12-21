@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Lab 4 - Вход</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="styles/index.css"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: white;
+            color: black;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #info-lab-name h1 {
+            font-size: 20px;
+            transform: scale(2); /* Увеличит в 2 раза */
+            transform-origin: center; /* Масштабирование от центра */
+            display: inline-block; /* Нужно для корректного применения transform */
+
+        }
+
+        header {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #030303;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 10px;
+            background-color: #f0f0f0;
+            padding: 30px 0;
+
+        }
+
+        .horizontal-container {
+            text-align: center;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .form-element {
+            margin: 5px;
+            padding: 5px;
+        }
+
+        #info-lab-name h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        #info {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin: 3px 0;
+        }
+
+        #digitalClock {
+            font-size: 60px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .date {
+            font-size: 20px;
+            font-family: monospace;
+        }
+
+        .start-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .start-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div id="info">
+        <div id="info-lab-name">
+            <h1><strong>Лабораторная работа №4</strong></h1>
+        </div>
+        <div class="horizontal-container">
+            <div id="info-name" class="form-element">
+                <span><strong>Студент:</strong> Прокопенко Сергей Петрович</span>
+            </div>
+            <div id="info-group" class="form-element">
+                <span><strong>Группа:</strong> P3207</span>
+            </div>
+            <div id="info-variant" class="form-element">
+                <span><strong>Вариант:</strong> №843501</span>
+            </div>
+        </div>
+        <div class="clock-container">
+            <div id="digitalClock">{{ currentTime }}</div>
+            <div class="date">{{ currentDate }}</div>
+        </div>
+    </div>
+</header>
+
+<div class="form-row">
+    <div class="col-4"></div>
+    <div class="col-4" id="form">
+        <div class="alert alert-warning alert-dismissible fade" id="alert" role="alert">
+            <strong id="login-status">Вход успешно выполнен</strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <br>
+
+        <h6 class="lead">Логин:</h6>
+        <input v-model="login" id="email-text" placeholder="Введите логин" type="text"
+               class="form-control is-valid"
+               style="min-width:200px" required>
+        <br>
+
+        <h6 class="lead">Пароль:</h6>
+        <input v-model="pass" id="password-text" placeholder="Введите пароль" class="form-control is-valid"
+               type="password"
+               style="min-width:200px" required>
+        <br>
+
+        <button type="submit" class="btn btn-lg btn-block btn-dark" v-on:click="greet">Вход в аккаунт</button>
+        <br>
+        <button onclick="location.href = 'registration.jsp';" class="btn btn-lg btn-block btn-light">Зарегистрироваться</button>
+    </div>
+    <div class="col-4"></div>
+</div>
+
+<script src="scripts/index.js"></script>
+<script>
+    new Vue({
+        el: 'header',
+        data: {
+            currentTime: '',
+            currentDate: ''
+        },
+        methods: {
+            updateDateTime() {
+                const now = new Date();
+
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                this.currentTime = `${hours}:${minutes}:${seconds}`;
+
+
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+                this.currentDate = `${day}-${month}-${year}`;
+            }
+        },
+        created() {
+
+            this.updateDateTime();
+
+            setInterval(() => {
+                this.updateDateTime();
+            }, 1000);
+        }
+    });
+
+
+    new Vue({
+        el: '#form',
+        data: {
+            login: "",
+            pass: ""
+        },
+        methods: {
+            greet: function (event) {
+
+                let isValid = true;
+
+                if (this.login.length < 4) {
+                    document.getElementById("email-text").classList.replace("is-valid", "is-invalid");
+                    isValid = false;
+                } else {
+                    document.getElementById("email-text").classList.replace("is-invalid", "is-valid");
+                }
+
+                if (this.pass.length < 4) {
+                    document.getElementById("password-text").classList.replace("is-valid", "is-invalid");
+                    isValid = false;
+                } else {
+                    document.getElementById("password-text").classList.replace("is-invalid", "is-valid");
+                }
+
+                if (!isValid) {
+                    const alertBox = document.getElementById("alert");
+                    document.getElementById("login-status").innerText = "Логин и пароль должны содержать как минимум по 4 символа";
+                    alertBox.classList.add("show");
+                    return;
+                }
+
+
+                sendDatas(this.login, this.pass);
+            }
+        }
+    });
+</script>
+</body>
+</html>

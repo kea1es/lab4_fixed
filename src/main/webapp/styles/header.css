@@ -1,0 +1,21 @@
+header {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #030303;
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 10px;
+    background-color: #f0f0f0;
+}
+
+.horizontal-container {
+    text-align: center;
+    display: flex;
+    flex-direction: row; /* Внутренние элементы будут расположены горизонтально */
+    justify-content: center; /* Центрирование по вертикали */
+    align-items: center; /* Центрирование по горизонтали */
+}
+
+.form-element {
+    margin: 5px;
+    padding: 5px;
+}
