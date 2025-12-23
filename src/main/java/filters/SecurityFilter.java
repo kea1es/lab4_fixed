@@ -11,7 +11,6 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.net.URI;
 
 @Provider
 public class SecurityFilter implements ContainerRequestFilter {
@@ -30,18 +29,23 @@ public class SecurityFilter implements ContainerRequestFilter {
             return;
         }
 
-        Cookie tokenCookie = context.getCookies().get("token");
         HttpSession session = servletRequest.getSession(false);
+        Cookie tokenCookie = context.getCookies().get("token");
 
-        if (tokenCookie != null && session != null) {
-            // Преобразуем JAX-RS Cookie в Servlet Cookie для совместимости с UserManager
-            javax.servlet.http.Cookie servletCookie = new javax.servlet.http.Cookie("token", tokenCookie.getValue());
-            if (ejb.hasSession(session, servletCookie)) {
-                return;
-            }
+        if (session == null || tokenCookie == null) {
+            abortWithUnauthorized(context);
+            return;
         }
 
-        // Если не авторизован — прерываем запрос и отправляем редирект или 401
+        javax.servlet.http.Cookie servletCookie =
+                new javax.servlet.http.Cookie("token", tokenCookie.getValue());
+
+        if (!ejb.hasSession(session, servletCookie)) {
+            abortWithUnauthorized(context);
+        }
+    }
+
+    private void abortWithUnauthorized(ContainerRequestContext context) {
         context.abortWith(Response.status(Response.Status.UNAUTHORIZED)
                 .entity("User not authenticated")
                 .build());

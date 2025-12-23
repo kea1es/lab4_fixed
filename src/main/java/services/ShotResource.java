@@ -3,13 +3,13 @@ package services;
 import beansLab.entities.Shot;
 import beansLab.entities.User;
 import resources.UserManager;
+import dao.UserDao;
 
 import javax.ejb.EJB;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/shots")
@@ -22,17 +22,28 @@ public class ShotResource {
     @Context
     private HttpServletRequest request;
 
+    private UserDao userDao = new UserDao();
+
     @GET
     public Response getShots() {
-        User user = (User) request.getSession().getAttribute("User");
-        if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
+        String login = (String) request.getSession().getAttribute("user");
+        if (login == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        User user = userDao.findUserWithShots(login);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
 
         String csv = user.getShots().stream()
                 .sorted((s1, s2) -> s2.getStart().compareTo(s1.getStart()))
                 .map(this::formatToCSV)
                 .collect(Collectors.joining("\n"));
 
-        return Response.ok(csv).header("rows", user.getShots().size()).build();
+        return Response.ok(csv)
+                .header("rows", user.getShots().size())
+                .build();
     }
 
     @POST
@@ -40,19 +51,35 @@ public class ShotResource {
                             @FormParam("coord_y") Double y,
                             @FormParam("coord_r") Double r) {
 
-        User user = (User) request.getSession().getAttribute("User");
-        if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
+        String login = (String) request.getSession().getAttribute("user");
+        if (login == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
 
         if (x == null || y == null || r == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Missing coordinates").build();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Missing coordinates")
+                    .build();
         }
 
         Shot shot = ShotGenerator.generateShot(x, y, r);
+
+        User user = userDao.findUserByLogin(login);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
         ejb.addShotToUser(user, shot);
 
-        return Response.ok(formatToCSV(shot)).header("rows", user.getShots().size()).build();
-    }
+        User updatedUser = userDao.findUserWithShots(login);
+        if (updatedUser != null) {
+            request.getSession().setAttribute("User", updatedUser);
+        }
 
+        return Response.ok(formatToCSV(shot))
+                .header("rows", updatedUser != null ? updatedUser.getShots().size() : 0)
+                .build();
+    }
 
     private String formatToCSV(Shot shot) {
         return shot.getX() + " " +

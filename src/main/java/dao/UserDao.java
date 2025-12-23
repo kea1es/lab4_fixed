@@ -9,48 +9,16 @@ import utils.HibernateSessionFactoryUtil;
 
 import java.util.List;
 
+import static utils.HibernateSessionFactoryUtil.getSessionFactory;
+
 public class UserDao {
 
     private static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserDao.class);
 
     public UserDao() {
         createAllParts();
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+        try (Session session = getSessionFactory().openSession()) {
             session.clear();
-        }
-    }
-
-    public void saveUser(User user) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            session.save(user);
-            tx1.commit();
-        }
-    }
-
-    public void updateUser(User user) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            session.update(user);
-            tx1.commit();
-        }
-    }
-
-    public void deleteShots(User user) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            user.getShots().clear();
-            updateUser(user);
-            tx1.commit();
-        }
-    }
-
-    public List<User> findAllUsers() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            List<User> users = session.createQuery("FROM User", User.class).list();
-            tx1.commit();
-            return users;
         }
     }
 
@@ -107,7 +75,7 @@ public class UserDao {
     }
 
     private void createSeqUser() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+        try (Session session = getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
                 // Проверяем существование последовательности
@@ -132,7 +100,7 @@ public class UserDao {
     }
 
     private void createSeqShot() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+        try (Session session = getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
                 Query<Boolean> query = session.createNativeQuery(SEQ_SHOTS_CHECK, Boolean.class);
@@ -155,7 +123,7 @@ public class UserDao {
     }
 
     private void createTableUser() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+        try (Session session = getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
                 Query<Boolean> query = session.createNativeQuery(TABLE_USER_CHECK, Boolean.class);
@@ -178,7 +146,7 @@ public class UserDao {
     }
 
     private void createTableShot() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+        try (Session session = getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
                 Query<Boolean> query = session.createNativeQuery(TABLE_SHOTS_CHECK, Boolean.class);
@@ -197,6 +165,85 @@ public class UserDao {
                     log.warn("Не получилось создать таблицу shots: " + ex.getMessage());
                 }
             }
+        }
+    }
+
+    public List<User> findAllUsers() {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM User", User.class).list();
+        }
+    }
+
+    public User findUserByLogin(String login) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                            "FROM User WHERE login = :login", User.class)
+                    .setParameter("login", login)
+                    .uniqueResult();
+        }
+    }
+
+    public User findUserByLoginAndPassword(String login, String password) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                            "FROM User WHERE login = :login AND password = :password", User.class)
+                    .setParameter("login", login)
+                    .setParameter("password", password)
+                    .uniqueResult();
+        }
+    }
+
+    public User findUserWithShots(String login) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            User user = session.createQuery(
+                            "FROM User WHERE login = :login", User.class)
+                    .setParameter("login", login)
+                    .uniqueResult();
+
+            if (user != null) {
+                user.getShots().size();
+            }
+            return user;
+        }
+    }
+
+    public void addShotToUser(String login, Shot shot) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            Transaction tx = session.beginTransaction();
+
+            User user = session.createQuery(
+                            "FROM User WHERE login = :login", User.class)
+                    .setParameter("login", login)
+                    .uniqueResult();
+
+            if (user != null) {
+                shot.setUser(user);
+                session.save(shot);
+                user.getShots().add(shot);
+                session.update(user);
+            }
+
+            tx.commit();
+        }
+    }
+
+    public boolean saveUserIfNotExists(User user) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            Transaction tx = session.beginTransaction();
+
+            Long count = session.createQuery(
+                            "SELECT COUNT(*) FROM User WHERE login = :login", Long.class)
+                    .setParameter("login", user.getLogin())
+                    .uniqueResult();
+
+            if (count != null && count > 0) {
+                tx.commit();
+                return false;
+            }
+
+            session.save(user);
+            tx.commit();
+            return true;
         }
     }
 }
