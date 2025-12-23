@@ -33,6 +33,7 @@ public class AuthResource {
 
                 session.setAttribute("user", login);
 
+                // Создаем cookie с токеном для клиента
                 NewCookie tokenCookie = new NewCookie("token", String.valueOf(userInf.getToken()), "/", null, null, -1, false);
                 return Response.ok()
                         .header("StatusOfLogIn", 0)

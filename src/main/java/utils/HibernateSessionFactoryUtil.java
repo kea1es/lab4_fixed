@@ -19,15 +19,12 @@ public class HibernateSessionFactoryUtil {
                 Configuration configuration = new Configuration();
                 configuration.configure(CONFIG_FILE);
 
-                // Add annotated classes
                 configuration.addAnnotatedClass(User.class);
                 configuration.addAnnotatedClass(Shot.class);
 
-                // Apply properties
                 configuration.setProperty("hibernate.connection.driver_class", "org.postgresql.Driver");
                 configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
 
-                // Build session factory
                 ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())
                         .build();

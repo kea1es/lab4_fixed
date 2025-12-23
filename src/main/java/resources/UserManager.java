@@ -147,22 +147,4 @@ public class UserManager {
             return false;
         }
     }
-
-    /**
-     * Удаление всех выстрелов пользователя.
-     */
-    @Lock(LockType.WRITE)
-    public void clearUser(User user) {
-        usersDao.deleteShots(user);
-        user.getShots().clear();
-        log.info("All shots cleared for user: {}", user.getLogin());
-    }
-
-    /**
-     * Получение количества активных сессий.
-     */
-    @Lock(LockType.READ)
-    public int getActiveSessionsCount() {
-        return goingSessions.size();
-    }
 }

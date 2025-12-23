@@ -53,14 +53,6 @@ public class ShotResource {
         return Response.ok(formatToCSV(shot)).header("rows", user.getShots().size()).build();
     }
 
-    @DELETE
-    public Response clearShots() {
-        User user = (User) request.getSession().getAttribute("User");
-        if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
-
-        ejb.clearUser(user);
-        return Response.ok("CLEARED").build();
-    }
 
     private String formatToCSV(Shot shot) {
         return shot.getX() + " " +
