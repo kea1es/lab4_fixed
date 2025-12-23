@@ -7,10 +7,15 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import utils.HibernateSessionFactoryUtil;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import java.util.List;
 
 import static utils.HibernateSessionFactoryUtil.getSessionFactory;
 
+
+@Singleton
+@Startup
 public class UserDao {
 
     private static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserDao.class);
@@ -195,15 +200,11 @@ public class UserDao {
 
     public User findUserWithShots(String login) {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            User user = session.createQuery(
-                            "FROM User WHERE login = :login", User.class)
+            return session.createQuery(
+                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.shots WHERE u.login = :login", User.class)
                     .setParameter("login", login)
+                    .setHint("org.hibernate.cacheable", false)
                     .uniqueResult();
-
-            if (user != null) {
-                user.getShots().size();
-            }
-            return user;
         }
     }
 

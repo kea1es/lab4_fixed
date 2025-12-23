@@ -32,7 +32,7 @@ public class Shot implements Serializable {
     @Column(name = "script_time")
     private long scriptTime;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -48,15 +48,15 @@ public class Shot implements Serializable {
         return id;
     }
 
-    public void setX(double x) { // ИЗМЕНЕНО: float → double
+    public void setX(double x) {
         this.x = x;
     }
 
-    public void setY(double y) { // ИЗМЕНЕНО: float → double
+    public void setY(double y) {
         this.y = y;
     }
 
-    public void setR(double r) { // ИЗМЕНЕНО: float → double
+    public void setR(double r) {
         this.r = r;
     }
 
@@ -73,15 +73,15 @@ public class Shot implements Serializable {
         this.scriptTime = scriptTime;
     }
 
-    public double getX() { // ИЗМЕНЕНО: float → double
+    public double getX() {
         return x;
     }
 
-    public double getY() { // ИЗМЕНЕНО: float → double
+    public double getY() {
         return y;
     }
 
-    public double getR() { // ИЗМЕНЕНО: float → double
+    public double getR() {
         return r;
     }
 

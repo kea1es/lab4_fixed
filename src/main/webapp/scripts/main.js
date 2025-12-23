@@ -291,39 +291,41 @@ const clickAnswer = function (event) {
         return;
     }
 
-    var box = document.getElementById("image-coordinates").getBoundingClientRect();
-    var body = document.body;
-    var docEl = document.documentElement;
+    const svg = document.getElementById("image-coordinates");
+    const rect = svg.getBoundingClientRect();
 
-    var scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
-    var scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
-    var clientTop = docEl.clientTop || body.clientTop || 0;
-    var clientLeft = docEl.clientLeft || body.clientLeft || 0;
+    // Получаем координаты клика относительно SVG
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
 
-    var top = box.top + scrollTop - clientTop;
-    var left = box.left + scrollLeft - clientLeft;
+    console.log(`Клик: X=${clickX}, Y=${clickY}, SVG размер: ${rect.width}x${rect.height}`);
 
-    var xCord = ((event.clientX - left) / box.width) * 300;
-    var yCord = ((event.clientY - top) / box.height) * 300;
+    // Нормализуем координаты к системе SVG (0-300)
+    const xCord = (clickX / rect.width) * 300;
+    const yCord = (clickY / rect.height) * 300;
 
-    xCord = xCord - 150;
-    yCord = yCord - 150;
+    // Преобразуем в математические координаты (центр в 150,150)
+    const xGraph = xCord - 150;
+    const yGraph = -(yCord - 150); // Ось Y инвертирована в SVG
 
-    var x, y;
-    var r = currentR;
+    console.log(`Графические координаты: X=${xGraph}, Y=${yGraph}`);
 
-    if (r === 0) {
-        x = (xCord / 120);
-        y = -(yCord / 120);
+    // Преобразуем в реальные значения с учетом R
+    let x, y;
+    const r = currentR;
+
+    if (Math.abs(r) < 0.0001) { // r ≈ 0
+        x = (xGraph / 120);
+        y = (yGraph / 120);
     } else {
-        x = (xCord / 120) * r;
-        y = -(yCord / 120) * r;
+        x = (xGraph / 120) * r;
+        y = (yGraph / 120) * r;
     }
 
     x = parseFloat(x.toFixed(4));
     y = parseFloat(y.toFixed(4));
 
-    console.log("Клик по графику: X=" + x + ", Y=" + y + ", R=" + r);
+    console.log(`Математические координаты: X=${x}, Y=${y}, R=${r}`);
 
     const validationError = validateGraphData(x, y, r);
     if (validationError) {
@@ -541,8 +543,7 @@ function printPaint() {
         const rKey = getRKey(currentR);
         const pointsForCurrentR = allPoints[rKey] || [];
 
-        console.log(`Отрисовка графика для R=${currentR}, ключ=${rKey}, точек: ${pointsForCurrentR.length}`);
-
+        console.log(`Отрисовка графика для R=${currentR}, точек: ${pointsForCurrentR.length}`);
 
         for (let i = 0; i < pointsForCurrentR.length; i++) {
             let x = parseFloat(pointsForCurrentR[i][0]);
@@ -550,18 +551,19 @@ function printPaint() {
             let r = currentR;
 
             let cx, cy;
-            if (r === 0) {
-                cx = (150 + 120 * x);
-                cy = (150 - 120 * y);
+            if (Math.abs(r) < 0.0001) { // r ≈ 0
+                cx = 150 + 120 * x;
+                cy = 150 - 120 * y; // Ось Y инвертирована
             } else {
-                cx = (150 + 120 * (x / r));
-                cy = (150 - 120 * (y / r));
+                cx = 150 + 120 * (x / r);
+                cy = 150 - 120 * (y / r); // Ось Y инвертирована
             }
 
-            if (cx < 0) cx = 0;
-            if (cx > 300) cx = 300;
-            if (cy < 0) cy = 0;
-            if (cy > 300) cy = 300;
+            // Ограничиваем координаты внутри SVG
+            cx = Math.max(0, Math.min(300, cx));
+            cy = Math.max(0, Math.min(300, cy));
+
+            console.log(`Точка ${i}: x=${x}, y=${y}, cx=${cx}, cy=${cy}`);
 
             inHTML += `<circle cx="${cx}" cy="${cy}" r="5" `;
 
@@ -571,7 +573,7 @@ function printPaint() {
                 inHTML += `fill="#5ee667" `;
             }
 
-            inHTML += `stroke-width="1" stroke="rgb(0,0,0)" style="pointer-events: visible;"/>`;
+            inHTML += `stroke-width="1" stroke="rgb(0,0,0)" style="pointer-events: none;"/>`;
         }
     }
 

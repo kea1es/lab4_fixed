@@ -27,11 +27,9 @@ public class ShotResource {
     @GET
     public Response getShots() {
         String login = (String) request.getSession().getAttribute("user");
-        if (login == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
 
         User user = userDao.findUserWithShots(login);
+
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
