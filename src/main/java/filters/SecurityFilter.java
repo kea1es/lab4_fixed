@@ -18,6 +18,7 @@ public class SecurityFilter implements ContainerRequestFilter {
     @EJB
     private UserManager ejb;
 
+    // Получаем HTTP запрос через контекст JAX-RS
     @Context
     private HttpServletRequest servletRequest;
 
@@ -37,6 +38,7 @@ public class SecurityFilter implements ContainerRequestFilter {
             return;
         }
 
+        // Конвертируем JAX-RS Cookie в Servlet Cooki
         javax.servlet.http.Cookie servletCookie =
                 new javax.servlet.http.Cookie("token", tokenCookie.getValue());
 

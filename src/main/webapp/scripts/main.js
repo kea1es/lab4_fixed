@@ -239,18 +239,9 @@ function savePoint(pointData) {
         allPoints[rKey] = [];
     }
 
-    // Всегда добавляем как новую точку (даже если координаты одинаковые)
     allPoints[rKey].push(pointData);
 }
 
-function clearAllPoints() {
-    allPoints = {};
-    writeTable();
-
-    if (currentR !== null && !isNaN(currentR)) {
-        printPaint();
-    }
-}
 
 function getAllPointsForTable() {
     const result = [];
@@ -361,7 +352,7 @@ function processServerResponse(data) {
         const lines = data.trim().split("\n");
 
         if (lines.length === 1) {
-            // Новая точка - всегда добавляем как новую
+
             const pointData = lines[0].split(" ");
             if (pointData.length >= 5) {
                 savePoint(pointData);
@@ -512,15 +503,14 @@ function printPaint() {
             let r = currentR;
 
             let cx, cy;
-            if (Math.abs(r) < 0.0001) { // r ≈ 0
+            if (Math.abs(r) < 0.0001) {
                 cx = 150 + 120 * x;
-                cy = 150 - 120 * y; // Ось Y инвертирована
+                cy = 150 - 120 * y;
             } else {
                 cx = 150 + 120 * (x / r);
-                cy = 150 - 120 * (y / r); // Ось Y инвертирована
+                cy = 150 - 120 * (y / r);
             }
 
-            // Ограничиваем координаты внутри SVG
             cx = Math.max(0, Math.min(300, cx));
             cy = Math.max(0, Math.min(300, cy));
 
@@ -545,20 +535,6 @@ function exit() {
         method: 'POST',
         success: function () {
             location.href = '/Lab4/';
-        }
-    });
-}
-
-function clear() {
-    $.ajax({
-        url: '/Lab4/api/shots',
-        method: 'DELETE',
-        success: function (data) {
-            clearAllPoints();
-            showCustomAlert("Данные очищены", 'success');
-        },
-        error: function (xhr) {
-            showCustomAlert("Ошибка очистки", 'error');
         }
     });
 }
@@ -612,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Загружаем точки с сервера
     loadAllPointsFromServer();
 
-    // Навешиваем обработчики на радио-кнопки R
+    // обработчики на радио-кнопки R
     const rRadios = document.querySelectorAll('.rCheckbox');
     rRadios.forEach(radio => {
         radio.addEventListener('change', function(e) {

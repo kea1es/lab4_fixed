@@ -37,10 +37,6 @@ public class User {
         shots.add(shot);
     }
 
-    public void removeShot(Shot shot) {
-        shots.remove(shot);
-    }
-
     public long getId() {
         return id;
     }
@@ -53,21 +49,6 @@ public class User {
         this.login = login;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public List<Shot> getShots() {
-        return shots;
-    }
-
-    public void setShots(List<Shot> shots) {
-        this.shots = shots;
-    }
 
     @Override
     public String toString() {

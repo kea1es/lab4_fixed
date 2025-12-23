@@ -315,7 +315,7 @@
 
 <script>
     new Vue({
-        el: '#user-request',
+        el: '#user-request', // Управляет элементом с id="user-request"
         data: {
             coord_r: localStorage.getItem('last_r') || "",
             coord_x: localStorage.getItem('last_x') || "",
