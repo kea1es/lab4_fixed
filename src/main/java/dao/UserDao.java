@@ -173,12 +173,6 @@ public class UserDao {
         }
     }
 
-    public List<User> findAllUsers() {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM User", User.class).list();
-        }
-    }
-
     public User findUserByLogin(String login) {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             return session.createQuery(
@@ -195,36 +189,6 @@ public class UserDao {
                     .setParameter("login", login)
                     .setParameter("password", password)
                     .uniqueResult();
-        }
-    }
-
-    public User findUserWithShots(String login) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            return session.createQuery(
-                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.shots WHERE u.login = :login", User.class)
-                    .setParameter("login", login)
-                    .setHint("org.hibernate.cacheable", false)
-                    .uniqueResult();
-        }
-    }
-
-    public void addShotToUser(String login, Shot shot) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
-
-            User user = session.createQuery(
-                            "FROM User WHERE login = :login", User.class)
-                    .setParameter("login", login)
-                    .uniqueResult();
-
-            if (user != null) {
-                shot.setUser(user);
-                session.save(shot);
-                user.getShots().add(shot);
-                session.update(user);
-            }
-
-            tx.commit();
         }
     }
 
@@ -245,6 +209,44 @@ public class UserDao {
             session.save(user);
             tx.commit();
             return true;
+        }
+    }
+
+    public List<Shot> findShotsByUserWithPagination(String login, int offset, int limit) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                            "SELECT s FROM Shot s WHERE s.user.login = :login ORDER BY s.start DESC", Shot.class)
+                    .setParameter("login", login)
+                    .setFirstResult(offset)
+                    .setMaxResults(limit)
+                    .list();
+        }
+    }
+
+    public long countShotsByUser(String login) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                            "SELECT COUNT(s) FROM Shot s WHERE s.user.login = :login", Long.class)
+                    .setParameter("login", login)
+                    .uniqueResult();
+        }
+    }
+
+    public void addShotToUser(String login, Shot shot) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            Transaction tx = session.beginTransaction();
+
+            User user = session.createQuery(
+                            "SELECT u FROM User u WHERE u.login = :login", User.class)
+                    .setParameter("login", login)
+                    .uniqueResult();
+
+            if (user != null) {
+                shot.setUser(user);
+                session.save(shot);
+            }
+
+            tx.commit();
         }
     }
 }

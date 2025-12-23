@@ -1,10 +1,9 @@
 package resources;
-
 import beansLab.entities.User;
 
 public class UserInf {
-
     private String login;
+    private long userId;
     private int token;
     private String sessionId;
 
@@ -16,13 +15,18 @@ public class UserInf {
         return sessionId;
     }
 
-    public int getToken(){
+    public int getToken() {
         return token;
     }
 
-    public UserInf(User userIn, String sessionIdIn){
-        this.login = userIn.getLogin();
-        this.sessionId = sessionIdIn;
-        this.token = (sessionIdIn + userIn.getId()).hashCode();
+    public long getUserId() {
+        return userId;
+    }
+
+    public UserInf(User user, String sessionId) {
+        this.login = user.getLogin();
+        this.userId = user.getId();
+        this.sessionId = sessionId;
+        this.token = (sessionId + user.getId()).hashCode();
     }
 }

@@ -20,7 +20,8 @@ public class UserManager {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserManager.class);
 
     private UserDao usersDao;
-    private final HashMap<String, UserInf> activeSessions = new HashMap<>();
+
+    private final HashMap<String, SessionInfo> activeSessions = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -48,14 +49,13 @@ public class UserManager {
                 return null;
             }
 
-            // УДАЛЯЕМ или КОММЕНТИРУЕМ эту строку, она забивает память:
-            // session.setAttribute("User", userWithShots);
-
-            // Оставляем только эту (она у тебя есть в AuthResource, но можно и тут для надежности):
             session.setAttribute("user", login);
+            session.setAttribute("userId", user.getId());
 
             UserInf userInf = new UserInf(user, session.getId());
-            activeSessions.put(session.getId(), userInf);
+
+            SessionInfo sessionInfo = new SessionInfo(login, user.getId(), userInf.getToken());
+            activeSessions.put(session.getId(), sessionInfo);
 
             log.info("User {} logged in...", login);
             return userInf;
@@ -68,13 +68,11 @@ public class UserManager {
     @Lock(LockType.WRITE)
     public void endSession(HttpSession session) {
         String sessionId = session.getId();
-        UserInf userInf = activeSessions.get(sessionId);
-        if (userInf != null) {
-            // Было userInf.getUser().getLogin(), стало:
-            log.info("Ending session for user: {}", userInf.getLogin());
+        SessionInfo sessionInfo = activeSessions.get(sessionId);
+        if (sessionInfo != null) {
+            log.info("Ending session for user: {}", sessionInfo.getLogin());
         }
         activeSessions.remove(sessionId);
-        session.removeAttribute("user"); // удаляем строковый атрибут
         session.invalidate();
     }
 
@@ -90,9 +88,9 @@ public class UserManager {
     }
 
     @Lock(LockType.WRITE)
-    public void addShotToUser(User user, Shot shot) {
-        usersDao.addShotToUser(user.getLogin(), shot);
-        log.debug("Shot added to user: {}", user.getLogin());
+    public void addShotToUser(String login, Shot shot) {
+        usersDao.addShotToUser(login, shot);
+        log.debug("Shot added to user: {}", login);
     }
 
     @Lock(LockType.READ)
@@ -102,16 +100,16 @@ public class UserManager {
         }
 
         String sessionId = session.getId();
-        UserInf userInf = activeSessions.get(sessionId);
+        SessionInfo sessionInfo = activeSessions.get(sessionId);
 
-        if (userInf == null) {
+        if (sessionInfo == null) {
             log.warn("No session found for ID: {}", sessionId);
             return false;
         }
 
         try {
             int cookieToken = Integer.parseInt(tokenCookie.getValue());
-            boolean isValid = userInf.getToken() == cookieToken;
+            boolean isValid = sessionInfo.getToken() == cookieToken;
 
             if (!isValid) {
                 log.warn("Invalid token for session: {}", sessionId);
@@ -121,6 +119,31 @@ public class UserManager {
         } catch (NumberFormatException e) {
             log.warn("Invalid token format for session: {}", sessionId);
             return false;
+        }
+    }
+
+
+    private static class SessionInfo {
+        private final String login;
+        private final long userId;
+        private final int token;
+
+        public SessionInfo(String login, long userId, int token) {
+            this.login = login;
+            this.userId = userId;
+            this.token = token;
+        }
+
+        public String getLogin() {
+            return login;
+        }
+
+        public long getUserId() {
+            return userId;
+        }
+
+        public int getToken() {
+            return token;
         }
     }
 }

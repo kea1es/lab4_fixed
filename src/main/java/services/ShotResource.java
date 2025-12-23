@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Path("/shots")
@@ -22,25 +23,31 @@ public class ShotResource {
     @Context
     private HttpServletRequest request;
 
-    private UserDao userDao = new UserDao();
+    @EJB
+    private UserDao userDao;
 
     @GET
-    public Response getShots() {
+    public Response getShots(@QueryParam("limit") @DefaultValue("50") int limit,
+                             @QueryParam("offset") @DefaultValue("0") int offset) {
         String login = (String) request.getSession().getAttribute("user");
 
-        User user = userDao.findUserWithShots(login);
-
-        if (user == null) {
+        if (login == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        String csv = user.getShots().stream()
+        List<Shot> shots = userDao.findShotsByUserWithPagination(login, offset, limit);
+        long totalShots = userDao.countShotsByUser(login);
+
+        String csv = shots.stream()
                 .sorted((s1, s2) -> s2.getStart().compareTo(s1.getStart()))
                 .map(this::formatToCSV)
                 .collect(Collectors.joining("\n"));
 
         return Response.ok(csv)
-                .header("rows", user.getShots().size())
+                .header("rows", shots.size())
+                .header("total", totalShots)
+                .header("offset", offset)
+                .header("limit", limit)
                 .build();
     }
 
@@ -62,17 +69,12 @@ public class ShotResource {
 
         Shot shot = ShotGenerator.generateShot(x, y, r);
 
-        User user = userDao.findUserByLogin(login);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
+        ejb.addShotToUser(login, shot);
 
-        ejb.addShotToUser(user, shot);
-
-        User updatedUser = userDao.findUserWithShots(login);
+        long totalShots = userDao.countShotsByUser(login);
 
         return Response.ok(formatToCSV(shot))
-                .header("rows", updatedUser != null ? updatedUser.getShots().size() : 0)
+                .header("rows", totalShots)
                 .build();
     }
 
