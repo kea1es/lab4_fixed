@@ -48,19 +48,19 @@ public class UserManager {
                 return null;
             }
 
-            User userWithShots = usersDao.findUserWithShots(login);
-            if (userWithShots == null) {
-                userWithShots = user;
-            }
+            // УДАЛЯЕМ или КОММЕНТИРУЕМ эту строку, она забивает память:
+            // session.setAttribute("User", userWithShots);
 
-            session.setAttribute("User", userWithShots);
-            UserInf userInf = new UserInf(userWithShots, session.getId());
+            // Оставляем только эту (она у тебя есть в AuthResource, но можно и тут для надежности):
+            session.setAttribute("user", login);
+
+            UserInf userInf = new UserInf(user, session.getId());
             activeSessions.put(session.getId(), userInf);
 
-            log.info("User {} logged in. Active sessions: {}", login, activeSessions.size());
+            log.info("User {} logged in...", login);
             return userInf;
         } catch (Exception e) {
-            log.error("Login error for user {}: {}", login, e.getMessage());
+            log.error("Login error...", e);
             return null;
         }
     }
@@ -70,12 +70,12 @@ public class UserManager {
         String sessionId = session.getId();
         UserInf userInf = activeSessions.get(sessionId);
         if (userInf != null) {
-            log.info("Ending session for user: {}", userInf.getUser().getLogin());
+            // Было userInf.getUser().getLogin(), стало:
+            log.info("Ending session for user: {}", userInf.getLogin());
         }
         activeSessions.remove(sessionId);
-        session.removeAttribute("User");
+        session.removeAttribute("user"); // удаляем строковый атрибут
         session.invalidate();
-        log.debug("Session ended. Active sessions: {}", activeSessions.size());
     }
 
     @Lock(LockType.WRITE)

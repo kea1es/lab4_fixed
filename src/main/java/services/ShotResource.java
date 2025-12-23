@@ -70,9 +70,6 @@ public class ShotResource {
         ejb.addShotToUser(user, shot);
 
         User updatedUser = userDao.findUserWithShots(login);
-        if (updatedUser != null) {
-            request.getSession().setAttribute("User", updatedUser);
-        }
 
         return Response.ok(formatToCSV(shot))
                 .header("rows", updatedUser != null ? updatedUser.getShots().size() : 0)

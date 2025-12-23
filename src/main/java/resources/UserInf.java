@@ -2,17 +2,14 @@ package resources;
 
 import beansLab.entities.User;
 
-import java.util.HashMap;
-import java.util.List;
-
 public class UserInf {
 
-    private User user;
+    private String login;
     private int token;
     private String sessionId;
 
-    public User getUser() {
-        return user;
+    public String getLogin() {
+        return login;
     }
 
     public String getSessionId() {
@@ -24,9 +21,8 @@ public class UserInf {
     }
 
     public UserInf(User userIn, String sessionIdIn){
-        user = userIn;
-        sessionId = sessionIdIn;
-        token = (sessionIdIn + user.getId()).hashCode();
+        this.login = userIn.getLogin();
+        this.sessionId = sessionIdIn;
+        this.token = (sessionIdIn + userIn.getId()).hashCode();
     }
-
 }

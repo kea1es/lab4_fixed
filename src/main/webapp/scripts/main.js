@@ -1,15 +1,12 @@
 let currentR = null;
 let code = 0;
-let allPoints = {}; // Хранилище всех точек по R: { "1": [...], "2": [...], ... }
-let allPointsList = []; // Все точки для таблицы (объединенные из всех R)
-
+let allPoints = {}; // Единственное хранилище: { "1": [...], "2": [...], ... }
 
 function getRKey(r) {
     const numR = parseFloat(r);
     if (isNaN(numR)) return r.toString();
     return numR.toString();
 }
-
 
 function showCustomAlert(message, type = 'error') {
     const container = document.getElementById('custom-alert-container');
@@ -75,7 +72,6 @@ function showCustomAlert(message, type = 'error') {
     }, 5000);
 }
 
-
 function closeAlert(alertId) {
     const alert = document.getElementById(alertId);
     if (alert) {
@@ -89,12 +85,10 @@ function closeAlert(alertId) {
     }
 }
 
-
 function parseYValue(y) {
     if (typeof y !== 'string') return y;
     return y.replace(',', '.');
 }
-
 
 function validateFormData(x, y, r) {
     if (x === undefined || x === '' || x === null) {
@@ -145,7 +139,6 @@ function validateFormData(x, y, r) {
 
     return null;
 }
-
 
 function validateGraphData(x, y, r) {
     if (r === undefined || r === '' || r === null || isNaN(r)) {
@@ -200,9 +193,7 @@ function updateClock() {
     setTimeout(updateClock, 1000);
 }
 
-
 function setR(newR) {
-
     if (currentR !== null && Math.abs(parseFloat(newR) - parseFloat(currentR)) < 0.001) {
         return;
     }
@@ -233,29 +224,6 @@ function setR(newR) {
     }
 }
 
-
-
-
-function updateAllPointsList() {
-    allPointsList = [];
-
-    for (const rKey in allPoints) {
-        if (allPoints.hasOwnProperty(rKey)) {
-            allPointsList = allPointsList.concat(allPoints[rKey]);
-        }
-    }
-
-
-    allPointsList.sort((a, b) => {
-        const timeA = a[4] || '';
-        const timeB = b[4] || '';
-        return timeB.localeCompare(timeA);
-    });
-
-    writeTable();
-}
-
-
 function savePoint(pointData) {
     if (!pointData || pointData.length < 5) {
         console.error("Некорректные данные точки:", pointData);
@@ -265,18 +233,18 @@ function savePoint(pointData) {
     const r = pointData[2];
     const rKey = getRKey(r);
 
-    console.log(`Сохранение точки: X=${pointData[0]}, Y=${pointData[1]}, R=${r}, ключ=${rKey}`);
+    console.log(`Сохранение новой точки: X=${pointData[0]}, Y=${pointData[1]}, R=${r}, ключ=${rKey}, время=${pointData[4]}`);
 
     if (!allPoints[rKey]) {
         allPoints[rKey] = [];
     }
 
+    // Всегда добавляем как новую точку (даже если координаты одинаковые)
     allPoints[rKey].push(pointData);
 }
 
 function clearAllPoints() {
     allPoints = {};
-    allPointsList = [];
     writeTable();
 
     if (currentR !== null && !isNaN(currentR)) {
@@ -284,6 +252,42 @@ function clearAllPoints() {
     }
 }
 
+function getAllPointsForTable() {
+    const result = [];
+    for (const rKey in allPoints) {
+        if (allPoints.hasOwnProperty(rKey)) {
+            result.push(...allPoints[rKey]);
+        }
+    }
+
+    // Сортировка по времени (новые сверху)
+    result.sort((a, b) => {
+        const timeA = a[4] || '';
+        const timeB = b[4] || '';
+        return timeB.localeCompare(timeA);
+    });
+
+    return result;
+}
+
+function writeTable() {
+    const pointsForTable = getAllPointsForTable();
+    let inHTML = "";
+
+    if (pointsForTable.length === 0) {
+        inHTML = `<tr><td colspan="6" style="text-align: center;">Нет данных</td></tr>`;
+    } else {
+        for (let i = 0; i < pointsForTable.length; i++) {
+            inHTML += "<tr>";
+            for (let j = 0; j < 6; j++) {
+                inHTML += "<td>" + pointsForTable[i][j] + "</td>";
+            }
+            inHTML += "</tr>";
+        }
+    }
+
+    document.getElementById("tableBody").innerHTML = inHTML;
+}
 
 const clickAnswer = function (event) {
     if (currentR === null || isNaN(currentR)) {
@@ -298,8 +302,6 @@ const clickAnswer = function (event) {
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
 
-    console.log(`Клик: X=${clickX}, Y=${clickY}, SVG размер: ${rect.width}x${rect.height}`);
-
     // Нормализуем координаты к системе SVG (0-300)
     const xCord = (clickX / rect.width) * 300;
     const yCord = (clickY / rect.height) * 300;
@@ -307,8 +309,6 @@ const clickAnswer = function (event) {
     // Преобразуем в математические координаты (центр в 150,150)
     const xGraph = xCord - 150;
     const yGraph = -(yCord - 150); // Ось Y инвертирована в SVG
-
-    console.log(`Графические координаты: X=${xGraph}, Y=${yGraph}`);
 
     // Преобразуем в реальные значения с учетом R
     let x, y;
@@ -325,7 +325,7 @@ const clickAnswer = function (event) {
     x = parseFloat(x.toFixed(4));
     y = parseFloat(y.toFixed(4));
 
-    console.log(`Математические координаты: X=${x}, Y=${y}, R=${r}`);
+    console.log("Клик по графику: X=" + x + ", Y=" + y + ", R=" + r);
 
     const validationError = validateGraphData(x, y, r);
     if (validationError) {
@@ -335,7 +335,6 @@ const clickAnswer = function (event) {
 
     send(x, y, r);
 };
-
 
 function send(x, y, r) {
     console.log("Отправка точки на сервер:", {x, y, r});
@@ -355,7 +354,6 @@ function send(x, y, r) {
     });
 }
 
-
 function processServerResponse(data) {
     console.log("Обработка ответа от сервера:", data);
 
@@ -363,27 +361,11 @@ function processServerResponse(data) {
         const lines = data.trim().split("\n");
 
         if (lines.length === 1) {
-
+            // Новая точка - всегда добавляем как новую
             const pointData = lines[0].split(" ");
             if (pointData.length >= 5) {
-                const rKey = getRKey(pointData[2]);
-
-
-                if (allPoints[rKey]) {
-                    const index = allPoints[rKey].findIndex(point =>
-                        point[0] === pointData[0] &&
-                        point[1] === pointData[1] &&
-                        point[2] === pointData[2]
-                    );
-
-
-                    if (index !== -1) {
-                        allPoints[rKey].splice(index, 1);
-                    }
-                }
-
                 savePoint(pointData);
-                updateAllPointsList();
+                writeTable();
 
                 const pointR = parseFloat(pointData[2]);
                 if (currentR !== null && Math.abs(pointR - currentR) < 0.001) {
@@ -391,7 +373,7 @@ function processServerResponse(data) {
                 }
             }
         } else {
-
+            // Загрузка всех точек с сервера
             allPoints = {};
 
             lines.forEach(line => {
@@ -403,7 +385,7 @@ function processServerResponse(data) {
                 }
             });
 
-            updateAllPointsList();
+            writeTable();
 
             if (currentR !== null && !isNaN(currentR)) {
                 printPaint();
@@ -411,25 +393,6 @@ function processServerResponse(data) {
         }
     }
 }
-
-function writeTable() {
-    let inHTML = "";
-
-    if (allPointsList.length === 0) {
-        inHTML = `<tr><td colspan="6" style="text-align: center;">Нет данных</td></tr>`;
-    } else {
-        for (let i = 0; i < allPointsList.length; i++) {
-            inHTML += "<tr>";
-            for (let j = 0; j < 6; j++) {
-                inHTML += "<td>" + allPointsList[i][j] + "</td>";
-            }
-            inHTML += "</tr>";
-        }
-    }
-
-    document.getElementById("tableBody").innerHTML = inHTML;
-}
-
 
 function printPaint() {
     let inHTML = `<rect width="300" height="300" fill="rgb(255,255,255)" stroke-width="0" stroke="rgb(0,0,0)"></rect>
@@ -503,7 +466,6 @@ function printPaint() {
 
     inHTML += `<text x="150" y="170" font-family="Arial" font-size="10" text-anchor="middle" fill="rgb(0,0,0)">0</text>`;
 
-
     inHTML += `<text x="135" y="30" font-family="Arial" font-size="10" text-anchor="end" fill="rgb(0,0,0)">`;
     if (currentR !== null && !isNaN(currentR)) {
         inHTML += `${currentR}`;
@@ -538,12 +500,11 @@ function printPaint() {
 
     inHTML += `<text x="135" y="150" font-family="Arial" font-size="10" text-anchor="end" fill="rgb(0,0,0)">0</text>`;
 
-
     if (currentR !== null && !isNaN(currentR)) {
         const rKey = getRKey(currentR);
         const pointsForCurrentR = allPoints[rKey] || [];
 
-        console.log(`Отрисовка графика для R=${currentR}, точек: ${pointsForCurrentR.length}`);
+        console.log(`Отрисовка графика для R=${currentR}, ключ=${rKey}, точек: ${pointsForCurrentR.length}`);
 
         for (let i = 0; i < pointsForCurrentR.length; i++) {
             let x = parseFloat(pointsForCurrentR[i][0]);
@@ -563,8 +524,6 @@ function printPaint() {
             cx = Math.max(0, Math.min(300, cx));
             cy = Math.max(0, Math.min(300, cy));
 
-            console.log(`Точка ${i}: x=${x}, y=${y}, cx=${cx}, cy=${cy}`);
-
             inHTML += `<circle cx="${cx}" cy="${cy}" r="5" `;
 
             if (pointsForCurrentR[i][3] === "false") {
@@ -580,7 +539,6 @@ function printPaint() {
     document.getElementById("image-coordinates").innerHTML = inHTML;
 }
 
-
 function exit() {
     $.ajax({
         url: '/Lab4/api/auth/exit',
@@ -590,7 +548,6 @@ function exit() {
         }
     });
 }
-
 
 function clear() {
     $.ajax({
@@ -605,7 +562,6 @@ function clear() {
         }
     });
 }
-
 
 function loadAllPointsFromServer() {
     $.ajax({
@@ -623,13 +579,12 @@ function loadAllPointsFromServer() {
     });
 }
 
-
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('image-coordinates').addEventListener('click', clickAnswer);
 
     updateClock();
 
-
+    // Восстанавливаем сохраненные значения
     const savedR = localStorage.getItem('last_r');
     const savedX = localStorage.getItem('last_x');
     const savedY = localStorage.getItem('last_y');
@@ -637,7 +592,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (savedR && !isNaN(parseFloat(savedR))) {
         setTimeout(() => {
             setR(parseFloat(savedR));
-
 
             const rRadio = document.querySelector(`.rCheckbox[value="${savedR}"]`);
             if (rRadio) {
@@ -655,8 +609,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 100);
     }
 
+    // Загружаем точки с сервера
     loadAllPointsFromServer();
 
+    // Навешиваем обработчики на радио-кнопки R
     const rRadios = document.querySelectorAll('.rCheckbox');
     rRadios.forEach(radio => {
         radio.addEventListener('change', function(e) {
