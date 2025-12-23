@@ -20,26 +20,6 @@ public class UserDao {
         }
     }
 
-    public User findUserById(long id) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            User user = session.get(User.class, id);
-            tx1.commit();
-            return user;
-        }
-    }
-
-    public User findUserByLogin(String login) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            Query<User> query = session.createQuery("FROM User WHERE login = :login", User.class);
-            query.setParameter("login", login);
-            User user = query.uniqueResult();
-            tx1.commit();
-            return user;
-        }
-    }
-
     public void saveUser(User user) {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
@@ -56,29 +36,12 @@ public class UserDao {
         }
     }
 
-    public void deleteUser(User user) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            session.delete(user);
-            tx1.commit();
-        }
-    }
-
     public void deleteShots(User user) {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             user.getShots().clear();
             updateUser(user);
             tx1.commit();
-        }
-    }
-
-    public Shot findShotById(long id) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Transaction tx1 = session.beginTransaction();
-            Shot shot = session.get(Shot.class, id);
-            tx1.commit();
-            return shot;
         }
     }
 
@@ -92,27 +55,27 @@ public class UserDao {
     }
 
 
-    private static String tableUserCheck =
+    private static String TABLE_USER_CHECK =
             "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users')";
 
-    private static String tableShotsCheck =
+    private static String TABLE_SHOTS_CHECK =
             "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'shots')";
 
-    private static String seqUserCheck =
+    private static String SEQ_USER_CHECK =
             "SELECT EXISTS (SELECT FROM information_schema.sequences WHERE sequence_schema = 'public' AND sequence_name = 'seq_user')";
 
-    private static String seqShotCheck =
+    private static String SEQ_SHOTS_CHECK =
             "SELECT EXISTS (SELECT FROM information_schema.sequences WHERE sequence_schema = 'public' AND sequence_name = 'seq_shot')";
 
 
-    private static String tableUsers =
+    private static String TABLE_USERS =
             "CREATE TABLE users (" +
                     "    user_id SERIAL PRIMARY KEY, " +
                     "    login VARCHAR(255) NOT NULL UNIQUE, " +
                     "    password VARCHAR(255) NOT NULL" +
                     ")";
 
-    private static String tableShots =
+    private static String TABLE_SHOTS =
             "CREATE TABLE shots (" +
                     "    shot_id SERIAL PRIMARY KEY, " +
                     "    x REAL NOT NULL, " +
@@ -126,10 +89,10 @@ public class UserDao {
                     ")";
 
 
-    private static String seqUser =
+    private static String SEQ_USER =
             "CREATE SEQUENCE IF NOT EXISTS seq_user START 1 INCREMENT 1";
 
-    private static String seqShot =
+    private static String SEQ_SHOT =
             "CREATE SEQUENCE IF NOT EXISTS seq_shot START 1 INCREMENT 1";
 
     private void createAllParts() {
@@ -138,8 +101,8 @@ public class UserDao {
             createTableShot();
             createSeqUser();
             createSeqShot();
-        } catch (Exception ex) {
-            log.error("Error creating database schema", ex);
+        } catch (Exception execption) {
+            log.error("Ошибка во время создания структуры БД", execption);
         }
     }
 
@@ -147,21 +110,22 @@ public class UserDao {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
-                Query<Boolean> query = session.createNativeQuery(seqUserCheck, Boolean.class);
+                // Проверяем существование последовательности
+                Query<Boolean> query = session.createNativeQuery(SEQ_USER_CHECK, Boolean.class);
                 Boolean exists = query.getSingleResult();
                 if (exists != null && !exists) {
-                    session.createNativeQuery(seqUser).executeUpdate();
-                    log.info("Sequence seq_user created");
+                    session.createNativeQuery(SEQ_USER).executeUpdate();
+                    log.info("Последовательность seq_user успешно создана");
                 }
                 tx1.commit();
             } catch (Exception e) {
                 if (tx1 != null) tx1.rollback();
                 // Если запрос не сработал, пробуем создать последовательность напрямую
                 try {
-                    session.createNativeQuery(seqUser).executeUpdate();
-                    log.info("Sequence seq_user created (fallback)");
+                    session.createNativeQuery(SEQ_USER).executeUpdate();
+                    log.info("Последовательность seq_user создана (fallback)");
                 } catch (Exception ex) {
-                    log.warn("Could not create seq_user sequence: " + ex.getMessage());
+                    log.warn("Не получилось создать последовательность seq_user: " + ex.getMessage());
                 }
             }
         }
@@ -171,20 +135,20 @@ public class UserDao {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
-                Query<Boolean> query = session.createNativeQuery(seqShotCheck, Boolean.class);
+                Query<Boolean> query = session.createNativeQuery(SEQ_SHOTS_CHECK, Boolean.class);
                 Boolean exists = query.getSingleResult();
                 if (exists != null && !exists) {
-                    session.createNativeQuery(seqShot).executeUpdate();
-                    log.info("Sequence seq_shot created");
+                    session.createNativeQuery(SEQ_SHOT).executeUpdate();
+                    log.info("Последовательность seq_shot успешно создана");
                 }
                 tx1.commit();
             } catch (Exception e) {
                 if (tx1 != null) tx1.rollback();
                 try {
-                    session.createNativeQuery(seqShot).executeUpdate();
-                    log.info("Sequence seq_shot created (fallback)");
+                    session.createNativeQuery(SEQ_SHOT).executeUpdate();
+                    log.info("Последовательность seq_shot создана (fallback)");
                 } catch (Exception ex) {
-                    log.warn("Could not create seq_shot sequence: " + ex.getMessage());
+                    log.warn("Не получилось создать последовательность seq_shot: " + ex.getMessage());
                 }
             }
         }
@@ -194,20 +158,20 @@ public class UserDao {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
-                Query<Boolean> query = session.createNativeQuery(tableUserCheck, Boolean.class);
+                Query<Boolean> query = session.createNativeQuery(TABLE_USER_CHECK, Boolean.class);
                 Boolean exists = query.getSingleResult();
                 if (exists != null && !exists) {
-                    session.createNativeQuery(tableUsers).executeUpdate();
-                    log.info("Table users created");
+                    session.createNativeQuery(TABLE_USERS).executeUpdate();
+                    log.info("Таблица users успешно создана");
                 }
                 tx1.commit();
             } catch (Exception e) {
                 if (tx1 != null) tx1.rollback();
                 try {
-                    session.createNativeQuery(tableUsers).executeUpdate();
-                    log.info("Table users created (fallback)");
+                    session.createNativeQuery(TABLE_USERS).executeUpdate();
+                    log.info("Таблица users создана (fallback)");
                 } catch (Exception ex) {
-                    log.warn("Could not create users table: " + ex.getMessage());
+                    log.warn("Не получилось создать таблицу users: " + ex.getMessage());
                 }
             }
         }
@@ -217,20 +181,20 @@ public class UserDao {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
             Transaction tx1 = session.beginTransaction();
             try {
-                Query<Boolean> query = session.createNativeQuery(tableShotsCheck, Boolean.class);
+                Query<Boolean> query = session.createNativeQuery(TABLE_SHOTS_CHECK, Boolean.class);
                 Boolean exists = query.getSingleResult();
                 if (exists != null && !exists) {
-                    session.createNativeQuery(tableShots).executeUpdate();
-                    log.info("Table shots created");
+                    session.createNativeQuery(TABLE_SHOTS).executeUpdate();
+                    log.info("Таблица shots успешно создана");
                 }
                 tx1.commit();
             } catch (Exception e) {
                 if (tx1 != null) tx1.rollback();
                 try {
-                    session.createNativeQuery(tableShots).executeUpdate();
-                    log.info("Table shots created (fallback)");
+                    session.createNativeQuery(TABLE_SHOTS).executeUpdate();
+                    log.info("Таблица shots создана (fallback)");
                 } catch (Exception ex) {
-                    log.warn("Could not create shots table: " + ex.getMessage());
+                    log.warn("Не получилось создать таблицу shots: " + ex.getMessage());
                 }
             }
         }

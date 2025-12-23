@@ -22,14 +22,14 @@ public class UserManager {
 
     private UserDao usersDao;
     private List<User> users;
-    private final HashMap<String, UserInf> goingSessions = new HashMap<>();
+    private final HashMap<String, UserInf> goingSessions = new HashMap<>(); // хранилище активных сессий
 
     public UserManager() {}
 
     @PostConstruct
     public void init() {
         usersDao = new UserDao();
-        users = usersDao.findAllUsers(); // Загружаем пользователей из БД при старте
+        users = usersDao.findAllUsers();
         log.info("Initialised user manager. Total users: {}", users.size());
     }
 
@@ -112,7 +112,7 @@ public class UserManager {
         }
 
         users.add(user);
-        usersDao.saveUser(user); // Сохранение через Hibernate
+        usersDao.saveUser(user);
         log.info("New user registered: {}", user.getLogin());
         return true;
     }
@@ -154,7 +154,7 @@ public class UserManager {
     @Lock(LockType.WRITE)
     public void clearUser(User user) {
         usersDao.deleteShots(user);
-        user.getShots().clear(); // Очистка коллекции в памяти для синхронизации с БД
+        user.getShots().clear();
         log.info("All shots cleared for user: {}", user.getLogin());
     }
 
