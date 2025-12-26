@@ -1,0 +1,33 @@
+.action-button {
+    border: none;
+    background: grey;
+    color: white;
+}
+
+.action-button:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.action-button-styled {
+    background-color: green !important;
+    color: white !important;
+    border: none !important;
+    width: 158px;
+    height: 40px;
+    border-radius: 10px;
+}
+
+.action-button-styled:hover {
+    background-color: #006400 !important;
+    color: white !important;
+}
+
+.registration-button-block {
+    margin-bottom: 40px !important;
+}
+
+.bottom-margin {
+    margin-top: 100px !important;
+    margin-bottom: 30px !important;
+}

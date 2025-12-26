@@ -5,43 +5,9 @@
     <title>Lab 4 - Регистрация</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
     <link rel="stylesheet" href="styles/header.css"/>
+    <link rel="stylesheet" href="styles/registartion-page.css"/>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
-    <style>
-        .action-button {
-            border: none;
-            background: grey;
-            color: white;
-        }
-
-        .action-button:hover {
-            background: #5a6268;
-            color: white;
-        }
-
-        .action-button-styled {
-            background-color: green !important;
-            color: white !important;
-            border: none !important;
-            width: 158px;
-            height: 40px;
-            border-radius: 10px;
-        }
-
-        .action-button-styled:hover {
-            background-color: #006400 !important;
-            color: white !important;
-        }
-
-        .registration-button-block {
-            margin-bottom: 40px !important;
-        }
-
-        .bottom-margin {
-            margin-top: 100px !important;
-            margin-bottom: 30px !important;
-        }
-    </style>
 </head>
 
 <body>
