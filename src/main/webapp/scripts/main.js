@@ -1,6 +1,6 @@
 let currentR = null;
 let code = 0;
-let allPoints = {}; // Единственное хранилище: { "1": [...], "2": [...], ... }
+let allPoints = {}; // { "1": [...], "2": [...], ... }
 
 function getRKey(r) {
     const numR = parseFloat(r);
@@ -301,7 +301,7 @@ const clickAnswer = function (event) {
     const xGraph = xCord - 150;
     const yGraph = -(yCord - 150); // Ось Y инвертирована в SVG
 
-    // Преобразуем в реальные значения с учетом R
+
     let x, y;
     const r = currentR;
 
@@ -364,7 +364,6 @@ function processServerResponse(data) {
                 }
             }
         } else {
-            // Загрузка всех точек с сервера
             allPoints = {};
 
             lines.forEach(line => {
@@ -560,7 +559,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     updateClock();
 
-    // Восстанавливаем сохраненные значения
     const savedR = localStorage.getItem('last_r');
     const savedX = localStorage.getItem('last_x');
     const savedY = localStorage.getItem('last_y');
@@ -585,10 +583,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 100);
     }
 
-    // Загружаем точки с сервера
     loadAllPointsFromServer();
 
-    // обработчики на радио-кнопки R
     const rRadios = document.querySelectorAll('.rCheckbox');
     rRadios.forEach(radio => {
         radio.addEventListener('change', function(e) {
